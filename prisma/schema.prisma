@@ -1,0 +1,130 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int                  @id @default(autoincrement())
+  email              String               @unique
+  name               String
+  role               Role                 @relation(fields: [roleId], references: [id])
+  roleId             Int
+  password           String
+  conId              Conference[]
+  RegisterConference RegisterConference[]
+  PasswordResetToken PasswordResetToken[]
+  ReviewPaper        ReviewPaper[]
+  Con_Reviewer       Con_Reviewer[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId], name: "userId_index")
+}
+
+model Role {
+  id    Int    @id @default(autoincrement())
+  name  String
+  users User[]
+}
+
+model Conference {
+  id                       Int                  @id @default(autoincrement())
+  name                     String
+  slug                     String               @unique
+  acronym                  String
+  theme                    String
+  description              String
+  topic                    String
+  banner                   String
+  venue                    String
+  address                  String
+  city                     String
+  country                  String
+  email                    String
+  institution              String
+  paper_template           String
+  payment_info             String
+  submission_deadlineStart DateTime
+  submission_deadlineEnd   DateTime
+  startDate                DateTime
+  endDate                  DateTime
+  status                   String
+  User                     User                 @relation(fields: [userId], references: [id])
+  userId                   Int
+  RegisterConference       RegisterConference[]
+  Con_Reviewer             Con_Reviewer[]
+}
+
+model RegisterConference {
+  id             Int           @id @default(autoincrement())
+  conference     Conference    @relation(fields: [conferenceId], references: [id])
+  conferenceId   Int
+  user           User          @relation(fields: [userId], references: [id])
+  userId         Int
+  paper_title    String
+  topic          String
+  abstract       String
+  keywords       String
+  paper          String
+  comments       String?
+  institution    String
+  country        String
+  city           String
+  status         String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  // Con_Reviewer             Con_Reviewer[]
+  ReviewPaper    ReviewPaper[]
+  Con_Reviewer   Con_Reviewer? @relation(fields: [con_ReviewerId], references: [id])
+  con_ReviewerId Int?
+  Authors        Authors[]
+}
+
+model Con_Reviewer {
+  id                 Int                  @id @default(autoincrement())
+  conference         Conference           @relation(fields: [conferenceId], references: [id])
+  conferenceId       Int
+  user               User                 @relation(fields: [userId], references: [id])
+  userId             Int
+  RegisterConference RegisterConference[]
+}
+
+model ReviewPaper {
+  id                   Int                @id @default(autoincrement())
+  reviewer             User               @relation(fields: [reviewerId], references: [id]) //ganti dengan di comment
+  reviewerId           Int //ganti dengan di comment
+  registerConference   RegisterConference @relation(fields: [registerConferenceId], references: [id])
+  registerConferenceId Int
+  // reviewer Con_Reviewer? @relation(fields: [conrevId], references: [id])
+  // reviewerId     Int?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@unique([reviewerId, registerConferenceId])
+}
+
+model Authors {
+  id           Int                @id @default(autoincrement())
+  name         String
+  email        String
+  institution  String
+  submissionId Int
+  submission   RegisterConference @relation(fields: [submissionId], references: [id])
+}
